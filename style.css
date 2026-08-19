@@ -1,0 +1,44 @@
+#anima_layer_lab .anima-inserted-layer {
+    border-left: 3px solid var(--primary-500, #8b5cf6);
+    padding-left: 0.45rem;
+}
+
+#anima_layer_lab .anima-original-layer {
+    border-left: 3px solid var(--neutral-500, #64748b);
+    padding-left: 0.45rem;
+}
+
+#anima_layer_lab .anima-ok,
+#anima_layer_lab .anima-build-success h3 {
+    color: #22c55e;
+}
+
+#anima_layer_lab .anima-error,
+#anima_layer_lab .anima-errors {
+    color: #ef4444;
+}
+
+#anima_layer_lab .anima-layer-report,
+#anima_layer_lab .anima-build-success {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color-primary, #475569);
+    border-radius: 0.5rem;
+}
+
+#anima_layer_lab pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+#anima_layer_lab_generation_info,
+#anima_layer_lab_generation_info textarea {
+    box-sizing: border-box;
+    max-width: 100%;
+    min-width: 0;
+}
+
+#anima_layer_lab_generation_info textarea {
+    overflow: auto;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
