@@ -25,7 +25,7 @@ Place this repository in Forge Neo's `extensions` directory:
 ```text
 sd-webui-forge-neo/
 └── extensions/
-    └── anima-layer-lab/
+    └── sd-forge-anima-layer-lab/
         ├── anima_layer_lab/
         ├── scripts/
         ├── README.md
