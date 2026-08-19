@@ -1,0 +1,39 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+
+      - name: Run pre-commit hooks
+        uses: pre-commit/action@v3.0.1
+
+      - name: Run Ruff Check
+        uses: astral-sh/ruff-action@v4.1.0
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+      - name: Install CPU Torch
+        run: pip3 install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Install dependencies
+        run: |
+          python -m pip install pytest-cov
+          python install.py
+      - run: pytest --cov --cov-report=term-missing .
