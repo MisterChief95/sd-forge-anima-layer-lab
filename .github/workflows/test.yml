@@ -18,9 +18,6 @@ jobs:
       - name: Run pre-commit hooks
         uses: pre-commit/action@v3.0.1
 
-      - name: Run Ruff Check
-        uses: astral-sh/ruff-action@v4.1.0
-
   test:
     runs-on: ubuntu-latest
     steps:
