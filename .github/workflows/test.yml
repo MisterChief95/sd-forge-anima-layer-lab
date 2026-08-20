@@ -23,7 +23,5 @@ jobs:
       - name: Install CPU Torch
         run: pip3 install torch --index-url https://download.pytorch.org/whl/cpu
       - name: Install dependencies
-        run: |
-          python -m pip install pytest-cov
-          python install.py
+        run: python -m pip install ".[dev]" pytest-cov
       - run: pytest --cov --cov-report=term-missing .
