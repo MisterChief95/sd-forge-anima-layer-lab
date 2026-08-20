@@ -10,7 +10,6 @@ from .constants import MERGE_MODES, NEW_BLOCK_COUNT, OUTPUT_DTYPES
 from .inspection import read_safetensors_header
 from .merge import MergeRecipe
 
-
 CONFIG_FORMAT = "anima-layer-lab-merge-config"
 CONFIG_VERSION = 1
 METADATA_KEY = "anima_layer_lab_recipe"
@@ -57,9 +56,7 @@ def _recipe_from_document(document: Any) -> dict[str, Any]:
         raise ValueError("Merge config must contain a JSON object")
     if "recipe" in document:
         if document.get("format") not in (None, CONFIG_FORMAT):
-            raise ValueError(
-                f"Unsupported merge config format: {document.get('format')}"
-            )
+            raise ValueError(f"Unsupported merge config format: {document.get('format')}")
         document = document["recipe"]
     if not isinstance(document, dict):
         raise ValueError("Merge config recipe must be a JSON object")

@@ -9,7 +9,6 @@ from pathlib import Path
 
 from .constants import LAYER_ORIGINS, NEW_BLOCK_COUNT, OLD_BLOCK_COUNT, OLD_TO_NEW
 
-
 MAX_HEADER_BYTES = 128 * 1024 * 1024
 _BLOCK_RE = re.compile(r"^(.*?blocks\.)(\d+)(\..+)$")
 _ADAPTER_RE = re.compile(r"^llm_adapter\.blocks\.(\d+)(\..+)$")
@@ -134,9 +133,7 @@ def read_safetensors_header(
             raise CheckpointFormatError("File is too small to be safetensors")
         header_size = int.from_bytes(raw_length, "little", signed=False)
         if header_size <= 2 or header_size > MAX_HEADER_BYTES:
-            raise CheckpointFormatError(
-                f"Invalid safetensors header size: {header_size}"
-            )
+            raise CheckpointFormatError(f"Invalid safetensors header size: {header_size}")
         raw_header = handle.read(header_size)
         if len(raw_header) != header_size:
             raise CheckpointFormatError("Truncated safetensors header")
@@ -161,25 +158,16 @@ def read_safetensors_header(
             offsets = tuple(int(v) for v in value["data_offsets"])
         except (KeyError, TypeError, ValueError) as exc:
             raise CheckpointFormatError(f"Invalid tensor descriptor for {key}") from exc
-        if (
-            len(offsets) != 2
-            or offsets[0] < 0
-            or offsets[1] < offsets[0]
-            or offsets[1] > data_size
-        ):
+        if len(offsets) != 2 or offsets[0] < 0 or offsets[1] < offsets[0] or offsets[1] > data_size:
             raise CheckpointFormatError(f"Invalid data offsets for {key}: {offsets}")
         if dtype not in DTYPE_BYTES:
-            raise CheckpointFormatError(
-                f"Unsupported safetensors dtype {dtype} in {key}"
-            )
+            raise CheckpointFormatError(f"Unsupported safetensors dtype {dtype} in {key}")
         expected = (prod(shape) if shape else 1) * DTYPE_BYTES[dtype]
         if expected != offsets[1] - offsets[0]:
             raise CheckpointFormatError(
-                f"Tensor byte count mismatch for {key}: expected {expected}, found {offsets[1] - offsets[0]}"
+                f"Tensor byte count mismatch for {key}: expected {expected}, found {offsets[1] - offsets[0]}",
             )
-        tensors[key] = TensorInfo(
-            key=key, dtype=dtype, shape=shape, data_offsets=offsets
-        )
+        tensors[key] = TensorInfo(key=key, dtype=dtype, shape=shape, data_offsets=offsets)
 
     if not tensors:
         raise CheckpointFormatError("Checkpoint contains no tensors")
@@ -211,9 +199,7 @@ def detect_block_prefix(
         candidates.append((score, prefix, by_index))
 
     if not candidates:
-        raise CheckpointFormatError(
-            "Could not find a contiguous Anima transformer block stack"
-        )
+        raise CheckpointFormatError("Could not find a contiguous Anima transformer block stack")
     candidates.sort(reverse=True, key=lambda item: item[0])
     _, prefix, by_index = candidates[0]
     return (
@@ -236,9 +222,7 @@ def parse_block_key(key: str, block_prefix: str) -> tuple[int, str] | None:
 def inspect_checkpoint(path: str | os.PathLike[str]) -> CheckpointSummary:
     resolved = str(Path(path).expanduser().resolve())
     header_size, metadata, tensors = read_safetensors_header(resolved)
-    block_prefix, block_count, block_suffixes = detect_block_prefix(
-        tuple(tensors.keys())
-    )
+    block_prefix, block_count, block_suffixes = detect_block_prefix(tuple(tensors.keys()))
 
     canonical_to_actual: dict[str, str] = {}
     warnings: list[str] = []
@@ -278,21 +262,20 @@ def _quantization_errors(summary: CheckpointSummary, label: str) -> list[str]:
     errors: list[str] = []
     for key, info in summary.tensors.items():
         if info.dtype not in SUPPORTED_FLOAT_DTYPES:
-            errors.append(
-                f"{label} uses unsupported/quantized dtype {info.dtype} in {key}"
-            )
+            errors.append(f"{label} uses unsupported/quantized dtype {info.dtype} in {key}")
             break
         lowered = key.lower()
         if any(marker in lowered for marker in ("qweight", "w_scale", "weight_scale")):
             errors.append(
-                f"{label} appears quantized ({key}); use a full-precision FP16/BF16 checkpoint"
+                f"{label} appears quantized ({key}); use a full-precision FP16/BF16 checkpoint",
             )
             break
     return errors
 
 
 def validate_pair(
-    old_path: str | os.PathLike[str], new_path: str | os.PathLike[str]
+    old_path: str | os.PathLike[str],
+    new_path: str | os.PathLike[str],
 ) -> CompatibilityReport:
     errors: list[str] = []
     warnings: list[str] = []
@@ -303,19 +286,17 @@ def validate_pair(
     try:
         new = inspect_checkpoint(new_path)
     except Exception as exc:
-        return CompatibilityReport(
-            False, [f"New model: {exc}"], old.warnings, 0, 0, old=old
-        )
+        return CompatibilityReport(False, [f"New model: {exc}"], old.warnings, 0, 0, old=old)
 
     warnings.extend(old.warnings)
     warnings.extend(new.warnings)
     if old.block_count != OLD_BLOCK_COUNT:
         errors.append(
-            f"Old model must contain {OLD_BLOCK_COUNT} transformer blocks; found {old.block_count}"
+            f"Old model must contain {OLD_BLOCK_COUNT} transformer blocks; found {old.block_count}",
         )
     if new.block_count != NEW_BLOCK_COUNT:
         errors.append(
-            f"New model must contain {NEW_BLOCK_COUNT} transformer blocks; found {new.block_count}"
+            f"New model must contain {NEW_BLOCK_COUNT} transformer blocks; found {new.block_count}",
         )
     errors.extend(_quantization_errors(old, "Old model"))
     errors.extend(_quantization_errors(new, "New model"))
@@ -326,9 +307,7 @@ def validate_pair(
         for origin in LAYER_ORIGINS:
             suffixes = new.block_suffixes.get(origin.new_index, frozenset())
             source_old = (
-                origin.old_index
-                if origin.old_index is not None
-                else origin.source_old_index
+                origin.old_index if origin.old_index is not None else origin.source_old_index
             )
             assert source_old is not None
             source_new = OLD_TO_NEW[source_old]
@@ -343,19 +322,19 @@ def validate_pair(
                 if old.tensors[old_key].shape != new.tensors[new_key].shape:
                     errors.append(
                         f"Shape mismatch for output block {origin.new_index}{suffix}: "
-                        f"old {old.tensors[old_key].shape}, new {new.tensors[new_key].shape}"
+                        f"old {old.tensors[old_key].shape}, new {new.tensors[new_key].shape}",
                     )
                     continue
                 if origin.inserted:
                     source_key = new.block_key(source_new, suffix)
                     if source_key is None:
                         errors.append(
-                            f"New model is missing initialization source blocks.{source_new}{suffix}"
+                            f"New model is missing initialization source blocks.{source_new}{suffix}",
                         )
                         continue
                     if new.tensors[source_key].shape != new.tensors[new_key].shape:
                         errors.append(
-                            f"New-model inserted/source shape mismatch at block {origin.new_index}{suffix}"
+                            f"New-model inserted/source shape mismatch at block {origin.new_index}{suffix}",
                         )
                         continue
                 matched += 1
@@ -366,13 +345,13 @@ def validate_pair(
             old_key = old.canonical_to_actual.get(canonical)
             if old_key is None:
                 warnings.append(
-                    f"Only the new model contains {canonical}; it will be copied from the new model"
+                    f"Only the new model contains {canonical}; it will be copied from the new model",
                 )
                 continue
             if old.tensors[old_key].shape != new.tensors[new_key].shape:
                 errors.append(
                     f"Non-block shape mismatch for {canonical}: "
-                    f"old {old.tensors[old_key].shape}, new {new.tensors[new_key].shape}"
+                    f"old {old.tensors[old_key].shape}, new {new.tensors[new_key].shape}",
                 )
             else:
                 matched += 1
