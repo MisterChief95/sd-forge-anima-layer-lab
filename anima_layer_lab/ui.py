@@ -4,6 +4,7 @@ import html
 
 import gradio as gr
 
+from .config_io import read_merge_config, write_merge_config
 from .constants import (
     LAYER_ORIGINS,
     MERGE_MODE_DELTA,
@@ -13,7 +14,6 @@ from .constants import (
     OUTPUT_DTYPE_MATCH_B,
     OUTPUT_DTYPES,
 )
-from .config_io import read_merge_config, write_merge_config
 from .forge_bridge import (
     checkpoint_path,
     generate_preview,
@@ -29,9 +29,7 @@ from .merge import MergeRecipe, build_merge
 
 def _default_checkpoint(choices: tuple[str, ...], *, expanded: bool) -> str | None:
     needles = (
-        ("2.9b", "2_9b", "2-9b")
-        if expanded
-        else ("anima-base", "anima_base", "preview3", "anima")
+        ("2.9b", "2_9b", "2-9b") if expanded else ("anima-base", "anima_base", "preview3", "anima")
     )
     for needle in needles:
         for choice in choices:
@@ -55,17 +53,17 @@ def _report_html(report: CompatibilityReport) -> str:
         parts.append(
             "<p><b>Old:</b> "
             f"{html.escape(report.old.filename)} — {report.old.block_count} blocks, "
-            f"{_format_gib(report.old.file_size)}, {', '.join(report.old.dtypes)}</p>"
+            f"{_format_gib(report.old.file_size)}, {', '.join(report.old.dtypes)}</p>",
         )
     if report.new is not None:
         parts.append(
             "<p><b>New:</b> "
             f"{html.escape(report.new.filename)} — {report.new.block_count} blocks, "
-            f"{_format_gib(report.new.file_size)}, {', '.join(report.new.dtypes)}</p>"
+            f"{_format_gib(report.new.file_size)}, {', '.join(report.new.dtypes)}</p>",
         )
     parts.append(
         f"<p>Matched {report.matched_tensor_count} tensors; checked "
-        f"{report.checked_block_tensor_count} transformer tensors.</p>"
+        f"{report.checked_block_tensor_count} transformer tensors.</p>",
     )
     if report.errors:
         parts.append("<ul class='anima-errors'>")
@@ -73,9 +71,7 @@ def _report_html(report: CompatibilityReport) -> str:
         parts.append("</ul>")
     if report.warnings:
         parts.append("<details><summary>Warnings</summary><ul>")
-        parts.extend(
-            f"<li>{html.escape(message)}</li>" for message in report.warnings[:30]
-        )
+        parts.extend(f"<li>{html.escape(message)}</li>" for message in report.warnings[:30])
         parts.append("</ul></details>")
     parts.append("</div>")
     return "".join(parts)
@@ -101,9 +97,7 @@ def refresh_choices_ui(old_value, new_value, module_values):
         if new_value in choices.checkpoints
         else _default_checkpoint(choices.checkpoints, expanded=True)
     )
-    kept_modules = [
-        value for value in (module_values or []) if value in choices.modules
-    ]
+    kept_modules = [value for value in (module_values or []) if value in choices.modules]
     if not kept_modules:
         kept_modules = list(choices.default_modules)
     return (
@@ -156,10 +150,7 @@ def _preset_values(name: str):
 
 
 def _apply_group_weights(original_weight: float, inserted_weight: float):
-    return [
-        inserted_weight if origin.inserted else original_weight
-        for origin in LAYER_ORIGINS
-    ]
+    return [inserted_weight if origin.inserted else original_weight for origin in LAYER_ORIGINS]
 
 
 def _uploaded_path(value) -> str:
@@ -320,7 +311,7 @@ def create_ui():
     samplers, schedulers = sampler_choices()
     default_sampler = "Euler" if "Euler" in samplers else samplers[0]
     default_scheduler = next(
-        (item for item in schedulers if item.lower() == "sgm uniform"), schedulers[0]
+        (item for item in schedulers if item.lower() == "sgm uniform"), schedulers[0],
     )
 
     with gr.Blocks(analytics_enabled=False, elem_id="anima_layer_lab") as interface:
@@ -329,7 +320,7 @@ def create_ui():
 ## Anima Layer Lab
 
 Expand a 28-block Anima 2B checkpoint into the 40-block Anima 2.9B layout, merge it per layer, and generate controlled previews without leaving this tab.
-"""
+""",
         )
         built_checkpoint = gr.State("")
 
@@ -340,22 +331,16 @@ Expand a 28-block Anima 2B checkpoint into the 40-block Anima 2.9B layout, merge
                     old_model = gr.Dropdown(
                         label="Old Anima 2B (A · 28 blocks)",
                         choices=checkpoint_choices,
-                        value=_default_checkpoint(
-                            tuple(checkpoint_choices), expanded=False
-                        ),
+                        value=_default_checkpoint(tuple(checkpoint_choices), expanded=False),
                     )
                     new_model = gr.Dropdown(
                         label="Anima 2.9B (B · 40 blocks)",
                         choices=checkpoint_choices,
-                        value=_default_checkpoint(
-                            tuple(checkpoint_choices), expanded=True
-                        ),
+                        value=_default_checkpoint(tuple(checkpoint_choices), expanded=True),
                     )
                 with gr.Row():
                     refresh_button = gr.Button("Refresh model lists")
-                    inspect_button = gr.Button(
-                        "Inspect compatibility", variant="secondary"
-                    )
+                    inspect_button = gr.Button("Inspect compatibility", variant="secondary")
                 compatibility = gr.HTML("Select both checkpoints, then inspect them.")
 
                 with gr.Accordion("Import a previous merge recipe", open=False):
@@ -413,10 +398,10 @@ Expand a 28-block Anima 2B checkpoint into the 40-block Anima 2.9B layout, merge
 
                 with gr.Row():
                     original_group = gr.Slider(
-                        0, 1, value=0, step=0.01, label="Set all inherited blocks"
+                        0, 1, value=0, step=0.01, label="Set all inherited blocks",
                     )
                     inserted_group = gr.Slider(
-                        0, 1, value=1, step=0.01, label="Set all inserted blocks"
+                        0, 1, value=1, step=0.01, label="Set all inserted blocks",
                     )
                     apply_groups = gr.Button("Apply groups")
 
@@ -446,7 +431,7 @@ Expand a 28-block Anima 2B checkpoint into the 40-block Anima 2.9B layout, merge
                                             step=0.01,
                                             label=label,
                                             elem_classes=classes,
-                                        )
+                                        ),
                                     )
 
                 with gr.Row():
@@ -462,15 +447,11 @@ Expand a 28-block Anima 2B checkpoint into the 40-block Anima 2.9B layout, merge
                         scale=1,
                     )
                 overwrite = gr.Checkbox(
-                    False, label="Overwrite an existing file with the same name"
+                    False, label="Overwrite an existing file with the same name",
                 )
                 build_button = gr.Button("Build merged checkpoint", variant="primary")
-                built_display = gr.Textbox(
-                    label="Built preview checkpoint", interactive=False
-                )
-                generated_config = gr.File(
-                    label="Generated merge config", interactive=False
-                )
+                built_display = gr.Textbox(label="Built preview checkpoint", interactive=False)
+                generated_config = gr.File(label="Generated merge config", interactive=False)
                 build_status = gr.HTML("No merge has been built in this session.")
 
             with gr.Column(scale=5, variant="panel"):
@@ -497,11 +478,9 @@ Expand a 28-block Anima 2B checkpoint into the 40-block Anima 2.9B layout, merge
                     width = gr.Slider(512, 1536, value=832, step=64, label="Width")
                     height = gr.Slider(512, 1536, value=1216, step=64, label="Height")
                 with gr.Row():
-                    sampler = gr.Dropdown(
-                        label="Sampler", choices=samplers, value=default_sampler
-                    )
+                    sampler = gr.Dropdown(label="Sampler", choices=samplers, value=default_sampler)
                     scheduler = gr.Dropdown(
-                        label="Scheduler", choices=schedulers, value=default_scheduler
+                        label="Scheduler", choices=schedulers, value=default_scheduler,
                     )
                     steps = gr.Slider(1, 100, value=32, step=1, label="Steps")
                 with gr.Row():
@@ -515,14 +494,10 @@ Expand a 28-block Anima 2B checkpoint into the 40-block Anima 2.9B layout, merge
                         info="Off is faster; Forge settings are restored either way.",
                     )
                 with gr.Row():
-                    preview_button = gr.Button(
-                        "Generate merged preview", variant="primary"
-                    )
-                    compare_button = gr.Button(
-                        "Compare A / B / merged", variant="secondary"
-                    )
+                    preview_button = gr.Button("Generate merged preview", variant="primary")
+                    compare_button = gr.Button("Compare A / B / merged", variant="secondary")
                 gr.Markdown(
-                    "Click an image for Forge's lightbox; use **←/→** to navigate and **Esc** to close."
+                    "Click an image for Forge's lightbox; use **←/→** to navigate and **Esc** to close.",
                 )
                 with gr.Group(elem_id="anima_layer_lab_gallery_container"):
                     gallery = gr.Gallery(
@@ -569,15 +544,9 @@ Expand a 28-block Anima 2B checkpoint into the 40-block Anima 2.9B layout, merge
             outputs=preset_outputs,
             queue=False,
         )
-        preset_delta.click(
-            fn=lambda: _preset_values("delta"), outputs=preset_outputs, queue=False
-        )
-        preset_all_a.click(
-            fn=lambda: _preset_values("all_a"), outputs=preset_outputs, queue=False
-        )
-        preset_all_b.click(
-            fn=lambda: _preset_values("all_b"), outputs=preset_outputs, queue=False
-        )
+        preset_delta.click(fn=lambda: _preset_values("delta"), outputs=preset_outputs, queue=False)
+        preset_all_a.click(fn=lambda: _preset_values("all_a"), outputs=preset_outputs, queue=False)
+        preset_all_b.click(fn=lambda: _preset_values("all_b"), outputs=preset_outputs, queue=False)
         preset_alternating.click(
             fn=lambda: _preset_values("alternating"),
             outputs=preset_outputs,
@@ -656,16 +625,12 @@ Expand a 28-block Anima 2B checkpoint into the 40-block Anima 2.9B layout, merge
             restore_loaded_model,
         ]
         preview_button.click(
-            fn=call_queue.wrap_gradio_gpu_call(
-                preview_merged_ui, extra_outputs=[[], gr.skip()]
-            ),
+            fn=call_queue.wrap_gradio_gpu_call(preview_merged_ui, extra_outputs=[[], gr.skip()]),
             inputs=[built_checkpoint, *preview_inputs],
             outputs=[gallery, generation_info, preview_status],
         )
         compare_button.click(
-            fn=call_queue.wrap_gradio_gpu_call(
-                compare_ui, extra_outputs=[[], gr.skip()]
-            ),
+            fn=call_queue.wrap_gradio_gpu_call(compare_ui, extra_outputs=[[], gr.skip()]),
             inputs=[old_model, new_model, built_checkpoint, *preview_inputs],
             outputs=[gallery, generation_info, preview_status],
         )

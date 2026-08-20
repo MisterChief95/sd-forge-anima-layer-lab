@@ -3,9 +3,9 @@ from __future__ import annotations
 import json
 import os
 import shutil
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Callable
 
 import torch
 from safetensors import safe_open
@@ -33,7 +33,6 @@ from .inspection import (
     parse_block_key,
     validate_pair,
 )
-
 
 ProgressCallback = Callable[[int, int, str], bool | None]
 
@@ -175,7 +174,7 @@ def _build_output_header(
                 dtype=dtype,
                 shape=info.shape,
                 data_offsets=(offset, offset + nbytes),
-            )
+            ),
         )
         offset += nbytes
 
@@ -183,12 +182,10 @@ def _build_output_header(
     metadata.update(
         {
             "anima_layer_lab_version": __version__,
-            "anima_layer_lab_recipe": json.dumps(
-                recipe.metadata_dict(), separators=(",", ":")
-            ),
+            "anima_layer_lab_recipe": json.dumps(recipe.metadata_dict(), separators=(",", ":")),
             "anima_layer_lab_old_model": os.path.basename(recipe.old_path),
             "anima_layer_lab_new_model": os.path.basename(recipe.new_path),
-        }
+        },
     )
     header: dict = {"__metadata__": _sanitize_metadata(metadata)}
     for spec in specs:
@@ -218,16 +215,14 @@ def _copy_raw_tensor(
     while remaining:
         data = source_handle.read(min(chunk_bytes, remaining))
         if not data:
-            raise IOError(
-                f"Unexpected end of {source_summary.path} while copying {source_info.key}"
+            raise OSError(
+                f"Unexpected end of {source_summary.path} while copying {source_info.key}",
             )
         output_handle.write(data)
         remaining -= len(data)
 
 
-def _write_tensor(
-    output_handle, absolute_offset: int, tensor: torch.Tensor, dtype: str
-) -> None:
+def _write_tensor(output_handle, absolute_offset: int, tensor: torch.Tensor, dtype: str) -> None:
     torch_dtype = _SAFE_TO_TORCH.get(dtype)
     if torch_dtype is None:
         raise ValueError(f"Cannot write dtype {dtype}")
@@ -248,17 +243,12 @@ def _write_zeros(output_handle, absolute_offset: int, nbytes: int) -> None:
 
 
 def _can_raw_copy(source_info: TensorInfo, output_spec: OutputTensorSpec) -> bool:
-    return (
-        source_info.dtype == output_spec.dtype
-        and source_info.shape == output_spec.shape
-    )
+    return source_info.dtype == output_spec.dtype and source_info.shape == output_spec.shape
 
 
 def _blend_tensors(a: torch.Tensor, b: torch.Tensor, weight: float) -> torch.Tensor:
     if a.shape != b.shape:
-        raise ValueError(
-            f"Shape mismatch during merge: {tuple(a.shape)} != {tuple(b.shape)}"
-        )
+        raise ValueError(f"Shape mismatch during merge: {tuple(a.shape)} != {tuple(b.shape)}")
     if not (a.is_floating_point() and b.is_floating_point()):
         return b if weight >= 0.5 else a
     weight = _clamp_weight(weight)
@@ -329,9 +319,7 @@ def build_merge(
     recipe.validate()
     report = validate_pair(recipe.old_path, recipe.new_path)
     if not report.valid or report.old is None or report.new is None:
-        raise ValueError(
-            "Checkpoint pair is incompatible:\n" + "\n".join(report.errors)
-        )
+        raise ValueError("Checkpoint pair is incompatible:\n" + "\n".join(report.errors))
     old = report.old
     new = report.new
 
@@ -349,7 +337,7 @@ def build_merge(
     if free_bytes < int(total_size * 1.05):
         raise OSError(
             f"Not enough free disk space: need about {total_size / 2**30:.2f} GiB, "
-            f"have {free_bytes / 2**30:.2f} GiB"
+            f"have {free_bytes / 2**30:.2f} GiB",
         )
 
     # Keep the safetensors suffix so the completed temporary file can be parsed
@@ -374,10 +362,7 @@ def build_merge(
 
             total = len(specs)
             for position, spec in enumerate(specs, start=1):
-                if (
-                    progress is not None
-                    and progress(position - 1, total, spec.key) is False
-                ):
+                if progress is not None and progress(position - 1, total, spec.key) is False:
                     raise MergeCancelled("Merge cancelled")
 
                 new_info = new.tensors[spec.key]
@@ -395,9 +380,7 @@ def build_merge(
                     assert source_old is not None
                     old_key = old.block_key(source_old, suffix)
                     if old_key is None:
-                        raise KeyError(
-                            f"Missing old tensor blocks.{source_old}{suffix}"
-                        )
+                        raise KeyError(f"Missing old tensor blocks.{source_old}{suffix}")
                     weight = _clamp_weight(recipe.layer_weights[block_index])
                     old_zero = origin.inserted and is_muted_output_suffix(suffix)
 
@@ -443,11 +426,9 @@ def build_merge(
                                 else old_safe.get_tensor(old_key)
                             )
                             merged = _blend_tensors(
-                                old_tensor, new_safe.get_tensor(spec.key), weight
+                                old_tensor, new_safe.get_tensor(spec.key), weight,
                             )
-                            _write_tensor(
-                                output_handle, absolute_offset, merged, spec.dtype
-                            )
+                            _write_tensor(output_handle, absolute_offset, merged, spec.dtype)
                         continue
 
                     # Experimental relative delta graft for an inserted block.
@@ -458,7 +439,7 @@ def build_merge(
                     new_source_key = new.block_key(source_new, suffix)
                     if new_source_key is None:
                         raise KeyError(
-                            f"Missing new initialization tensor blocks.{source_new}{suffix}"
+                            f"Missing new initialization tensor blocks.{source_new}{suffix}",
                         )
                     trained = new_safe.get_tensor(spec.key)
                     if old_zero:
@@ -474,9 +455,7 @@ def build_merge(
                 old_key = old.canonical_to_actual.get(canonical)
                 if old_key is None:
                     if _can_raw_copy(new_info, spec):
-                        _copy_raw_tensor(
-                            new_raw, new, new_info, output_handle, absolute_offset
-                        )
+                        _copy_raw_tensor(new_raw, new, new_info, output_handle, absolute_offset)
                     else:
                         _write_tensor(
                             output_handle,
@@ -487,16 +466,10 @@ def build_merge(
                     continue
 
                 weight = _non_block_weight(recipe, canonical)
-                if (
-                    recipe.mode == MERGE_MODE_INTERWEAVE
-                    or weight <= 0.0
-                    or weight >= 1.0
-                ):
+                if recipe.mode == MERGE_MODE_INTERWEAVE or weight <= 0.0 or weight >= 1.0:
                     _write_direct_choice(
                         use_new=(
-                            weight >= 0.5
-                            if recipe.mode == MERGE_MODE_INTERWEAVE
-                            else weight >= 1.0
+                            weight >= 0.5 if recipe.mode == MERGE_MODE_INTERWEAVE else weight >= 1.0
                         ),
                         old_key=old_key,
                         new_key=spec.key,
@@ -524,7 +497,7 @@ def build_merge(
         # Re-read the header before exposing the result to Forge.
         validation = validate_pair(recipe.old_path, part_path)
         if validation.new is None or validation.new.block_count != NEW_BLOCK_COUNT:
-            raise IOError("Completed output failed safetensors validation")
+            raise OSError("Completed output failed safetensors validation")
         if os.path.exists(output) and not recipe.overwrite:
             raise FileExistsError(f"Output appeared while merging: {output}")
         os.replace(part_path, output)

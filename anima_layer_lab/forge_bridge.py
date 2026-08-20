@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Iterable
 from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 
 
 @dataclass(frozen=True)
@@ -102,8 +102,7 @@ def _generate_one(
         "forge_additional_modules": list(modules),
     }
     p = processing.StableDiffusionProcessingTxt2Img(
-        outpath_samples=shared.opts.outdir_samples
-        or shared.opts.outdir_txt2img_samples,
+        outpath_samples=shared.opts.outdir_samples or shared.opts.outdir_txt2img_samples,
         outpath_grids=shared.opts.outdir_grids or shared.opts.outdir_txt2img_grids,
         prompt=prompt,
         negative_prompt=negative_prompt,

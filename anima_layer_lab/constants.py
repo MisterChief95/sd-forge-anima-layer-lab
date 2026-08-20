@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-
 OLD_BLOCK_COUNT = 28
 NEW_BLOCK_COUNT = 40
 
@@ -32,7 +31,7 @@ MUTED_OUTPUT_SUFFIXES = frozenset(
         ".self_attn.output_proj.weight",
         ".cross_attn.output_proj.weight",
         ".mlp.layer2.weight",
-    }
+    },
 )
 
 MERGE_MODE_DELTA = "Relative delta graft (experimental)"
@@ -68,7 +67,7 @@ def build_layer_origins() -> tuple[LayerOrigin, ...]:
                     new_index=new_index,
                     kind="inserted",
                     source_old_index=INSERTED_TO_SOURCE[new_index],
-                )
+                ),
             )
         else:
             origins.append(
@@ -76,7 +75,7 @@ def build_layer_origins() -> tuple[LayerOrigin, ...]:
                     new_index=new_index,
                     kind="original",
                     old_index=old_index,
-                )
+                ),
             )
             old_index += 1
 
@@ -87,9 +86,7 @@ def build_layer_origins() -> tuple[LayerOrigin, ...]:
 
 LAYER_ORIGINS = build_layer_origins()
 OLD_TO_NEW = {
-    origin.old_index: origin.new_index
-    for origin in LAYER_ORIGINS
-    if origin.old_index is not None
+    origin.old_index: origin.new_index for origin in LAYER_ORIGINS if origin.old_index is not None
 }
 
 

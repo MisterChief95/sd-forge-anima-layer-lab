@@ -18,7 +18,6 @@ from anima_layer_lab.constants import (
 from anima_layer_lab.inspection import inspect_checkpoint, validate_pair
 from anima_layer_lab.merge import MergeCancelled, MergeRecipe, build_merge
 
-
 BLOCK_SUFFIXES = tuple(sorted(MUTED_OUTPUT_SUFFIXES)) + (
     ".mlp.layer1.weight",
     ".self_attn.q_proj.weight",
@@ -26,9 +25,7 @@ BLOCK_SUFFIXES = tuple(sorted(MUTED_OUTPUT_SUFFIXES)) + (
 
 
 def _value(index: int, suffix_index: int) -> torch.Tensor:
-    return torch.full(
-        (2, 3), index * 0.125 + suffix_index * 0.03125, dtype=torch.bfloat16
-    )
+    return torch.full((2, 3), index * 0.125 + suffix_index * 0.03125, dtype=torch.bfloat16)
 
 
 def make_old_checkpoint(path: str) -> dict[str, torch.Tensor]:
@@ -38,37 +35,25 @@ def make_old_checkpoint(path: str) -> dict[str, torch.Tensor]:
             tensors[f"net.blocks.{block}{suffix}"] = _value(block + 1, suffix_index + 1)
     for block in range(6):
         tensors[f"net.llm_adapter.blocks.{block}.weight"] = torch.full(
-            (2, 2), block + 0.5, dtype=torch.bfloat16
+            (2, 2), block + 0.5, dtype=torch.bfloat16,
         )
-    tensors["net.llm_adapter.proj.weight"] = torch.full(
-        (2, 2), 2.0, dtype=torch.bfloat16
-    )
-    tensors["net.x_embedder.proj.1.weight"] = torch.full(
-        (2, 2), 3.0, dtype=torch.bfloat16
-    )
+    tensors["net.llm_adapter.proj.weight"] = torch.full((2, 2), 2.0, dtype=torch.bfloat16)
+    tensors["net.x_embedder.proj.1.weight"] = torch.full((2, 2), 3.0, dtype=torch.bfloat16)
     save_file(tensors, path, metadata={"model": "synthetic-old"})
     return tensors
 
 
-def make_new_checkpoint(
-    path: str, old: dict[str, torch.Tensor]
-) -> dict[str, torch.Tensor]:
+def make_new_checkpoint(path: str, old: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
     tensors: dict[str, torch.Tensor] = {}
     for origin in LAYER_ORIGINS:
-        source_old = (
-            origin.old_index
-            if origin.old_index is not None
-            else origin.source_old_index
-        )
+        source_old = origin.old_index if origin.old_index is not None else origin.source_old_index
         assert source_old is not None
         for suffix_index, suffix in enumerate(BLOCK_SUFFIXES):
             source = old[f"net.blocks.{source_old}{suffix}"].clone()
             if origin.inserted:
                 if suffix in MUTED_OUTPUT_SUFFIXES:
                     source.zero_()
-                delta = torch.full_like(
-                    source, (origin.new_index + suffix_index + 1) * 0.0078125
-                )
+                delta = torch.full_like(source, (origin.new_index + suffix_index + 1) * 0.0078125)
                 source.add_(delta)
             tensors[f"net.blocks.{origin.new_index}{suffix}"] = source
     for block in range(6):
@@ -76,9 +61,7 @@ def make_new_checkpoint(
             f"net.llm_adapter.blocks.{block}.weight"
         ].clone()
     tensors["net.llm_adapter.proj.weight"] = old["net.llm_adapter.proj.weight"].clone()
-    tensors["net.x_embedder.proj.1.weight"] = old[
-        "net.x_embedder.proj.1.weight"
-    ].clone()
+    tensors["net.x_embedder.proj.1.weight"] = old["net.x_embedder.proj.1.weight"].clone()
     save_file(tensors, path, metadata={"model": "synthetic-new"})
     return tensors
 
@@ -119,7 +102,7 @@ class MergeTests(unittest.TestCase):
                 adapter_weights=(1.0,) * 6,
                 non_block_weight=1.0,
                 llm_shared_weight=1.0,
-            )
+            ),
         )
         actual = load_all(output)
         expected = load_all(self.new_path)
@@ -129,9 +112,7 @@ class MergeTests(unittest.TestCase):
 
     def test_relative_delta_matches_new_when_sources_are_unchanged(self):
         output = os.path.join(self.temp.name, "delta.safetensors")
-        layer_weights = tuple(
-            1.0 if origin.inserted else 0.0 for origin in LAYER_ORIGINS
-        )
+        layer_weights = tuple(1.0 if origin.inserted else 0.0 for origin in LAYER_ORIGINS)
         build_merge(
             MergeRecipe(
                 old_path=self.old_path,
@@ -142,7 +123,7 @@ class MergeTests(unittest.TestCase):
                 adapter_weights=(0.0,) * 6,
                 non_block_weight=0.0,
                 llm_shared_weight=0.0,
-            )
+            ),
         )
         actual = load_all(output)
         expected = load_all(self.new_path)
@@ -161,14 +142,12 @@ class MergeTests(unittest.TestCase):
                 adapter_weights=(0.0,) * 6,
                 non_block_weight=0.0,
                 llm_shared_weight=0.0,
-            )
+            ),
         )
         actual = load_all(output)
         for origin in LAYER_ORIGINS:
             source_old = (
-                origin.old_index
-                if origin.old_index is not None
-                else origin.source_old_index
+                origin.old_index if origin.old_index is not None else origin.source_old_index
             )
             assert source_old is not None
             for suffix in BLOCK_SUFFIXES:
@@ -188,7 +167,7 @@ class MergeTests(unittest.TestCase):
                     old_path=self.old_path,
                     new_path=self.new_path,
                     output_path=output,
-                )
+                ),
             )
 
     def test_cancel_removes_partial_output(self):
@@ -224,12 +203,10 @@ class MergeTests(unittest.TestCase):
         self.assertTrue(config_path.endswith("config-test_merge_config.json"))
         from_json = read_merge_config(config_path)
         from_metadata = read_merge_config(output)
-        for actual, expected in zip(
-            from_json["layer_weights"], recipe.layer_weights, strict=True
-        ):
+        for actual, expected in zip(from_json["layer_weights"], recipe.layer_weights, strict=True):
             self.assertAlmostEqual(actual, expected, places=6)
         for actual, expected in zip(
-            from_metadata["adapter_weights"], recipe.adapter_weights, strict=True
+            from_metadata["adapter_weights"], recipe.adapter_weights, strict=True,
         ):
             self.assertAlmostEqual(actual, expected, places=6)
         self.assertEqual(from_json["non_block_weight"], 0.25)
