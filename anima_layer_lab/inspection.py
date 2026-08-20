@@ -274,7 +274,8 @@ def _quantization_errors(summary: CheckpointSummary, label: str) -> list[str]:
 
 
 def validate_pair(
-    old_path: str | os.PathLike[str], new_path: str | os.PathLike[str],
+    old_path: str | os.PathLike[str],
+    new_path: str | os.PathLike[str],
 ) -> CompatibilityReport:
     errors: list[str] = []
     warnings: list[str] = []

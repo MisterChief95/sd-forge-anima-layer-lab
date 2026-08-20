@@ -35,7 +35,9 @@ def make_old_checkpoint(path: str) -> dict[str, torch.Tensor]:
             tensors[f"net.blocks.{block}{suffix}"] = _value(block + 1, suffix_index + 1)
     for block in range(6):
         tensors[f"net.llm_adapter.blocks.{block}.weight"] = torch.full(
-            (2, 2), block + 0.5, dtype=torch.bfloat16,
+            (2, 2),
+            block + 0.5,
+            dtype=torch.bfloat16,
         )
     tensors["net.llm_adapter.proj.weight"] = torch.full((2, 2), 2.0, dtype=torch.bfloat16)
     tensors["net.x_embedder.proj.1.weight"] = torch.full((2, 2), 3.0, dtype=torch.bfloat16)
@@ -206,7 +208,9 @@ class MergeTests(unittest.TestCase):
         for actual, expected in zip(from_json["layer_weights"], recipe.layer_weights, strict=True):
             self.assertAlmostEqual(actual, expected, places=6)
         for actual, expected in zip(
-            from_metadata["adapter_weights"], recipe.adapter_weights, strict=True,
+            from_metadata["adapter_weights"],
+            recipe.adapter_weights,
+            strict=True,
         ):
             self.assertAlmostEqual(actual, expected, places=6)
         self.assertEqual(from_json["non_block_weight"], 0.25)

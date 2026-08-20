@@ -311,7 +311,8 @@ def create_ui():
     samplers, schedulers = sampler_choices()
     default_sampler = "Euler" if "Euler" in samplers else samplers[0]
     default_scheduler = next(
-        (item for item in schedulers if item.lower() == "sgm uniform"), schedulers[0],
+        (item for item in schedulers if item.lower() == "sgm uniform"),
+        schedulers[0],
     )
 
     with gr.Blocks(analytics_enabled=False, elem_id="anima_layer_lab") as interface:
@@ -398,10 +399,18 @@ Expand a 28-block Anima 2B checkpoint into the 40-block Anima 2.9B layout, merge
 
                 with gr.Row():
                     original_group = gr.Slider(
-                        0, 1, value=0, step=0.01, label="Set all inherited blocks",
+                        0,
+                        1,
+                        value=0,
+                        step=0.01,
+                        label="Set all inherited blocks",
                     )
                     inserted_group = gr.Slider(
-                        0, 1, value=1, step=0.01, label="Set all inserted blocks",
+                        0,
+                        1,
+                        value=1,
+                        step=0.01,
+                        label="Set all inserted blocks",
                     )
                     apply_groups = gr.Button("Apply groups")
 
@@ -447,7 +456,8 @@ Expand a 28-block Anima 2B checkpoint into the 40-block Anima 2.9B layout, merge
                         scale=1,
                     )
                 overwrite = gr.Checkbox(
-                    False, label="Overwrite an existing file with the same name",
+                    False,
+                    label="Overwrite an existing file with the same name",
                 )
                 build_button = gr.Button("Build merged checkpoint", variant="primary")
                 built_display = gr.Textbox(label="Built preview checkpoint", interactive=False)
@@ -480,7 +490,9 @@ Expand a 28-block Anima 2B checkpoint into the 40-block Anima 2.9B layout, merge
                 with gr.Row():
                     sampler = gr.Dropdown(label="Sampler", choices=samplers, value=default_sampler)
                     scheduler = gr.Dropdown(
-                        label="Scheduler", choices=schedulers, value=default_scheduler,
+                        label="Scheduler",
+                        choices=schedulers,
+                        value=default_scheduler,
                     )
                     steps = gr.Slider(1, 100, value=32, step=1, label="Steps")
                 with gr.Row():

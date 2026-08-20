@@ -426,7 +426,9 @@ def build_merge(
                                 else old_safe.get_tensor(old_key)
                             )
                             merged = _blend_tensors(
-                                old_tensor, new_safe.get_tensor(spec.key), weight,
+                                old_tensor,
+                                new_safe.get_tensor(spec.key),
+                                weight,
                             )
                             _write_tensor(output_handle, absolute_offset, merged, spec.dtype)
                         continue
