@@ -8,6 +8,7 @@ version = "0.2.0"
 description = "Anima Layer Lab extension for SD Forge"
 requires-python = ">=3.13"
 dependencies = [
+    "numpy>=2.1",
     "safetensors>=0.5",
     "torch",
 ]
