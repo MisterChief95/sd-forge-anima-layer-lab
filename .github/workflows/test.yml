@@ -9,15 +9,6 @@ on:
       - main
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository code
-        uses: actions/checkout@v4
-
-      - name: Run pre-commit hooks
-        uses: pre-commit/action@v3.0.1
-
   test:
     runs-on: ubuntu-latest
     steps:
@@ -27,6 +18,8 @@ jobs:
         with:
           python-version: "3.13"
           cache: "pip"
+      - name: Run pre-commit hooks
+        uses: pre-commit/action@v3.0.1
       - name: Install CPU Torch
         run: pip3 install torch --index-url https://download.pytorch.org/whl/cpu
       - name: Install dependencies
